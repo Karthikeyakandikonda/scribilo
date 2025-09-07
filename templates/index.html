@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login & Signup</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            width: 350px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+          h3 {
+            text-align: center;
+            margin-bottom: 5px;
+            color: #4b4b4b;
+            visibility: transparent;
+        }
+
+        input[type="text"], input[type="password"], input[type="email"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0 20px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+
+        input[type="text"]:hover, input[type="password"]:hover, input[type="email"]:hover {
+            border-color: #4CAF50;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .instagram-btn {
+            background-color: #E1306C;
+            margin-top: 10px;
+        }
+
+        .instagram-btn:hover {
+            background-color: #C13584;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .toggle {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .toggle span {
+            color: blue;
+            cursor: pointer;
+        }
+
+        .error {
+            color: red;
+            text-align: center;
+        }
+
+        .success {
+            color: green;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="form-container">
+        <h2 id="form-title">Login</h2>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div id="message">
+            {% for category, message in messages %}
+            <p class="{{ category }}">{{ message }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+        <form id="form" method="POST">
+            <input type="hidden" name="action" id="action" value="login">
+            <input type="email" name="email" id="email" placeholder="Email" required>
+            <input type="password" name="password" id="password" placeholder="Password" required>
+            <div id="name-field" style="display:none;">
+                <input type="text" name="name" id="name" placeholder="Full Name">
+            </div>
+            <button type="submit" id="submit-btn">Login</button>
+        </form>
+
+        <!-- Instagram Login -->
+                                        <h3> OR</h3>
+        <button class="instagram-btn" id="instagram-login">Login with Instagram</button>
+
+        <div class="toggle">
+            <span id="toggle-form">Don't have an account? Signup</span>
+        </div>
+    </div>
+
+    <script>
+        const toggleForm = document.getElementById('toggle-form');
+        const formTitle = document.getElementById('form-title');
+        const submitBtn = document.getElementById('submit-btn');
+        const nameField = document.getElementById('name-field');
+        const message = document.getElementById('message');
+        const form = document.getElementById('form');
+        const instagramBtn = document.getElementById('instagram-login');
+
+        let isLogin = true;
+
+        toggleForm.addEventListener('click', () => {
+            isLogin = !isLogin;
+            if (isLogin) {
+                formTitle.innerText = "Login";
+                submitBtn.innerText = "Login";
+                nameField.style.display = "none";
+                toggleForm.innerText = "Don't have an account? Signup";
+                document.getElementById('action').value = 'login';
+            } else {
+                formTitle.innerText = "Signup";
+                submitBtn.innerText = "Signup";
+                nameField.style.display = "block";
+                toggleForm.innerText = "Already have an account? Login";
+                document.getElementById('action').value = 'signup';
+            }
+            form.reset();
+        });
+
+        instagramBtn.addEventListener('click', () => {
+            // Here you can add Instagram OAuth redirection logic
+        });
+    </script>
+</body>
+</html>
