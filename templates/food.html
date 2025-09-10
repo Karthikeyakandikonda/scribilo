@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🍴 Food Blog - ScribbliO</title>
+  <style>
+    :root {
+      --bg: #fff;
+      --text: #222;
+      --card-bg: #f9f9f9;
+      --accent: #3d3b3b;
+    }
+    [data-theme="dark"] {
+      --bg: #121212;
+      --text: #f9f9f9;
+      --card-bg: #3d3b3b;
+      --accent: #ffb347;
+    }
+    [data-theme="peach"] {
+      --bg: #fff4ef;
+      --text: #4a2c2a;
+      --card-bg: #ffe1d6;
+      --accent: #ff6f61;
+    }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.3s, color 0.3s;
+    }
+    header {
+      padding: 1rem;
+      background: var(--accent);
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .theme-toggle {
+      cursor: pointer;
+      font-size: 1.5rem;
+      margin-right: 1rem;
+    }
+    main {
+      padding: 1rem;
+      max-width: 900px;
+      margin: auto;
+    }
+    .card {
+      background: var(--card-bg);
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .card h3 { margin-top: 0; }
+    .editor {
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+    .editor input {
+      width: 100%;
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    button {
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button.small { padding: 0.3rem 0.6rem; font-size: 0.9rem; }
+    button.btn-ghost {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+    .content img {
+      display: block;
+      margin: 6px 0;
+      max-width: 60%;
+      border-radius: 8px;
+    }
+    .cover {
+      width: 50%;
+      aspect-ratio: 1/1;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 4px;
+    }
+    #searchBox {
+      width: 100%;
+      padding: 0.6rem;
+      margin: 1rem 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .deleteBtn {
+      background: crimson;
+      border: none;
+      color: white;
+      padding: 0.3rem 0.7rem;
+      border-radius: 6px;
+      cursor: pointer;
+      float: right;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🍴 Food Blog - ScribbliO</h1>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span id="themeToggle" class="theme-toggle">🌞</span>
+      <button id="logoutBtn" style="display:none;">Logout</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Login -->
+    <div id="loginSection">
+      <h2>Login</h2>
+      <input type="text" id="username" placeholder="Enter your name"/>
+      <button id="loginBtn">Login</button>
+    </div>
+   
+    <!-- App -->
+    <div id="appSection" style="display:none;">
+      <h2 id="welcomeMsg"></h2>
+
+      <div class="editor">
+        <input type="text" id="titleInput" placeholder="Post title"/>
+        <div class="toolbar">
+          <button id="coverImgBtn" class="small">Add Cover</button>
+          <input type="file" id="coverInput" accept="image/*" style="display:none;">
+          <button id="insertImgBtn" class="small">Insert Image</button>
+          <input type="file" id="imageInput" accept="image/*" style="display:none;">
+          <button id="saveDraftBtn" class="small">Save draft</button>
+          <button id="publishBtn" class="primary small">Publish</button>
+          <button id="clearBtn" class="small btn-ghost">Clear</button>
+        </div>
+        <div id="contentInput" contenteditable="true" style="min-height:120px; border:1px solid #ccc; border-radius:8px; padding:0.5rem;"></div>
+      </div>
+
+      <input type="text" id="searchBox" placeholder="Search posts...">
+
+      <h3>All Published Posts</h3>
+      <div id="postsFeed"></div>
+    </div>
+  </main>
+
+  <script>
+    const loginSection = document.getElementById('loginSection');
+    const appSection = document.getElementById('appSection');
+    const usernameInput = document.getElementById('username');
+    const loginBtn = document.getElementById('loginBtn');
+    const welcomeMsg = document.getElementById('welcomeMsg');
+    const titleInput = document.getElementById('titleInput');
+    const contentInput = document.getElementById('contentInput');
+    const saveDraftBtn = document.getElementById('saveDraftBtn');
+    const publishBtn = document.getElementById('publishBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const insertImgBtn = document.getElementById('insertImgBtn');
+    const imageInput = document.getElementById('imageInput');
+    const coverImgBtn = document.getElementById('coverImgBtn');
+    const coverInput = document.getElementById('coverInput');
+    const postsFeed = document.getElementById('postsFeed');
+    const themeToggle = document.getElementById('themeToggle');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const searchBox = document.getElementById('searchBox');
+
+    let currentUser = null;
+    let coverImage = null;
+
+    function renderPosts(filter="") {
+      postsFeed.innerHTML = '';
+      const posts = JSON.parse(localStorage.getItem('posts') || '[]');
+      posts.filter(p => 
+        p.title.toLowerCase().includes(filter.toLowerCase()) ||
+        p.content.toLowerCase().includes(filter.toLowerCase())
+      ).forEach((p, index) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        let coverHtml = p.cover ? `<img src="${p.cover}" class="cover">` : '';
+        let deleteBtn = (p.author === currentUser) ? `<button class="deleteBtn" onclick="deletePost(${index})">Delete</button>` : '';
+        card.innerHTML = `${deleteBtn}${coverHtml}<h3>${p.title}</h3>
+                          <p><em>by ${p.author}</em></p>
+                          <div class="content">${p.content}</div>`;
+        postsFeed.prepend(card);
+      });
+    }
+
+    function deletePost(index) {
+      let posts = JSON.parse(localStorage.getItem('posts') || '[]');
+      if (posts[index].author !== currentUser) return;
+      posts.splice(index,1);
+      localStorage.setItem('posts', JSON.stringify(posts));
+      renderPosts(searchBox.value);
+    }
+    window.deletePost = deletePost;
+
+    loginBtn.addEventListener('click', () => {
+      const name = usernameInput.value.trim();
+      if (!name) return alert("Enter a name!");
+      currentUser = name;
+      loginSection.style.display = 'none';
+      appSection.style.display = 'block';
+      logoutBtn.style.display = 'inline-block';
+      welcomeMsg.textContent = "Welcome, " + currentUser;
+      renderPosts();
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      appSection.style.display = 'none';
+      loginSection.style.display = 'block';
+      logoutBtn.style.display = 'none';
+      usernameInput.value = '';
+      currentUser = null;
+    });
+
+    saveDraftBtn.addEventListener('click', () => {
+      localStorage.setItem('draft', JSON.stringify({
+        title: titleInput.value,
+        content: contentInput.innerHTML,
+        cover: coverImage
+      }));
+      alert("Draft saved!");
+    });
+
+    publishBtn.addEventListener('click', () => {
+      if (!titleInput.value.trim() || !contentInput.innerHTML.trim()) {
+        return alert("Please fill in title and content");
+      }
+      const posts = JSON.parse(localStorage.getItem('posts') || '[]');
+      posts.push({
+        title: titleInput.value.trim(),
+        content: contentInput.innerHTML,
+        cover: coverImage,
+        author: currentUser
+      });
+      localStorage.setItem('posts', JSON.stringify(posts));
+      titleInput.value = '';
+      contentInput.innerHTML = '';
+      coverImage = null;
+      renderPosts();
+      alert("Post published!");
+    });
+
+    clearBtn.addEventListener('click', () => {
+      titleInput.value = '';
+      contentInput.innerHTML = '';
+      coverImage = null;
+    });
+
+    insertImgBtn.addEventListener('click', () => imageInput.click());
+    imageInput.addEventListener('change', () => {
+      const file = imageInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = document.createElement("img");
+          img.src = e.target.result;
+          contentInput.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    coverImgBtn.addEventListener('click', () => coverInput.click());
+    coverInput.addEventListener('change', () => {
+      const file = coverInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => { coverImage = e.target.result; };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Theme handling (🌞 / 🌙 toggle)
+    function applyTheme(theme) {
+      if (theme === 'system') {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', theme);
+      }
+    }
+    let theme = localStorage.getItem('theme') || 'light';
+    applyTheme(theme);
+    themeToggle.textContent = (theme === 'dark') ? '🌙' : '🌞';
+
+    themeToggle.addEventListener('click', () => {
+      theme = (theme === 'light') ? 'dark' : 'light';
+      localStorage.setItem('theme', theme);
+      applyTheme(theme);
+      themeToggle.textContent = (theme === 'dark') ? '🌙' : '🌞';
+    });
+
+    searchBox.addEventListener('input', () => renderPosts(searchBox.value));
+
+    // Load draft if exists
+    const draft = JSON.parse(localStorage.getItem('draft') || 'null');
+    if (draft) {
+      titleInput.value = draft.title || '';
+      contentInput.innerHTML = draft.content || '';
+      coverImage = draft.cover || null;
+    }
+  </script>
+</body>
+</html>
