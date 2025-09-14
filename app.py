@@ -104,7 +104,7 @@ def blog(category):
         "fashion": "fashion.html",
         "travel": "travel.html"
     }
-    template_name = template_map.get(category.lower(), "blog.html")
+    template_name = template_map.get(category.lower(), "main.html")
 
     return render_template(template_name, posts=posts, category=category)
 

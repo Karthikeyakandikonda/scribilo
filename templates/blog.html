@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>{{ category.capitalize() }} • Scribilo</title>
+  <title>Scribilo</title>
 
   <!-- Internal CSS -->
   <style>
@@ -60,7 +60,7 @@
   <header>
     <div class="brand">
       <div class="logo">S</div>
-      <h1>{{ category.capitalize() }} • Scribilo</h1>
+      <h1> Scribilo</h1>
     </div>
     <div class="controls">
       <button class="theme-btn" id="theme-sun">☀️</button>
@@ -85,26 +85,24 @@
     <div class="accent {{ category }}"></div>
 
     <div class="feed" id="feed">
-      {% for post in posts %}
+      
       <div class="card" data-id="{{ post[0] }}">
-        <div class="content">{{ post[3] }}</div>
-        {% if post[4] %}
+        <div class="content"></div>
+        
         <div class="photos">
-          {% for img in post[4].split(',') %}
-            {% if img %}
+          
             <img src="{{ url_for('uploaded_file', filename=img) }}">
-            {% endif %}
-          {% endfor %}
+           
         </div>
-        {% endif %}
+        
         <div class="actions">
-          {% if post[1] == session['user'] %}
+
             <button class="edit-btn" data-id="{{ post[0] }}">Edit</button>
             <button class="delete-btn" data-id="{{ post[0] }}">Delete</button>
-          {% endif %}
+          
         </div>
       </div>
-      {% endfor %}
+      
     </div>
   </div>
 
@@ -126,8 +124,8 @@
     function applyTheme(name){
       document.body.classList.remove('dark');
       if(name==='moon'){ document.body.classList.add('dark'); }
-      else if(name==='peach'){ document.body.style.background='#fff6f2'; }
-      else if(name==='lav'){ document.body.style.background='#fbf7ff'; }
+      else if(name==='peach'){ document.body.style.background='skyblue'; }
+      else if(name==='lav'){ document.body.style.background='pink'}
       else{ document.body.style.background='#f7f7fb'; }
       localStorage.setItem('scribilo-theme', name);
     }
