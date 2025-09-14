@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{{ category.capitalize() }} • Scribilo</title>
+
+  <!-- Internal CSS -->
+  <style>
+    :root{
+      --bg: #f7f7fb;
+      --card: #fff;
+      --text: #222;
+      --muted: #666;
+      --radius: 14px;
+    }
+    body { margin:0; font-family:Inter, system-ui, Arial; background:var(--bg); color:var(--text); transition:background .25s, color .25s; }
+    header{ display:flex; align-items:center; justify-content:space-between; padding:18px 28px; }
+    .brand { display:flex; gap:12px; align-items:center; }
+    .logo { width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg,#a8ff78,#78ffd6); display:flex; align-items:center; justify-content:center; color:#033; font-weight:800; }
+    h1 { margin:0; font-size:20px; }
+    .controls { display:flex; gap:12px; align-items:center; }
+
+    .theme-btn { width:36px; height:36px; border-radius:10px; border:none; cursor:pointer; box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
+    .logout { padding:9px 12px; background:#ff6b6b; color:#fff; border-radius:10px; border:none; cursor:pointer; }
+
+    .wrap { max-width:1000px; margin:22px auto; padding:0 18px; }
+    .create { background:var(--card); border-radius:var(--radius); padding:16px; box-shadow: 0 10px 30px rgba(20,20,50,0.06); display:flex; gap:12px; }
+    textarea { width:100%; min-height:80px; resize:vertical; padding:12px; border-radius:10px; border:1px solid #eee; font-size:14px; }
+    .btn { padding:10px 14px; border-radius:12px; border:none; cursor:pointer; font-weight:600; background:linear-gradient(90deg,#6a11cb,#2575fc); color:white; }
+
+    .feed { margin-top:20px; display:grid; grid-template-columns: repeat(auto-fit,minmax(300px,1fr)); gap:18px; }
+    .card { background:var(--card); border-radius:16px; padding:14px; box-shadow: 0 12px 40px rgba(20,20,50,0.06); transition: transform .18s, box-shadow .18s; }
+    .card:hover{ transform:translateY(-6px); box-shadow: 0 20px 60px rgba(20,20,50,0.09); }
+    .content { margin-top:8px; color:var(--muted); font-size:14px; white-space:pre-wrap; }
+    .photos { margin-top:12px; display:grid; grid-template-columns: repeat(2,1fr); gap:8px; }
+    .photos img { width:100%; height:150px; object-fit:cover; border-radius:10px; }
+
+    .actions { display:flex; gap:8px; margin-top:12px; }
+    .edit-btn{ color:#2b6eff; border:none; background:none; cursor:pointer; }
+    .delete-btn{ color:#ff4d6d; border:none; background:none; cursor:pointer; }
+
+    .accent { height:6px; border-radius:8px; margin-top:12px; }
+    .accent.food { background: linear-gradient(90deg,#ff9966,#ff5e62); }
+    .accent.fashion { background: linear-gradient(90deg,#7F00FF,#E100FF); }
+    .accent.travel { background: linear-gradient(90deg,#00d2ff,#3a7bd5); }
+
+    /* dark mode */
+    body.dark { background: #0f1724; color:#e6eef8; }
+    body.dark .card, body.dark .create { background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.05); }
+    body.dark textarea { background: rgba(255,255,255,0.05); color:#e6eef8; }
+
+    /* edit modal */
+    .modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.45); }
+    .modal.active { display:flex; }
+    .modal-card { width:90%; max-width:600px; background:var(--card); padding:18px; border-radius:12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">S</div>
+      <h1>{{ category.capitalize() }} • Scribilo</h1>
+    </div>
+    <div class="controls">
+      <button class="theme-btn" id="theme-sun">☀️</button>
+      <button class="theme-btn" id="theme-moon">🌙</button>
+      <button class="theme-btn" id="theme-peach">🍑</button>
+      <button class="theme-btn" id="theme-lav">🌸</button>
+      <form method="GET" action="{{ url_for('logout') }}">
+        <button class="logout">Logout</button>
+      </form>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="create">
+      <form id="create-form" method="POST" enctype="multipart/form-data" style="width:100%;">
+        <textarea name="content" placeholder="Share something..."></textarea>
+        <input type="file" name="images" multiple>
+        <button class="btn" type="submit">Publish</button>
+      </form>
+    </div>
+
+    <div class="accent {{ category }}"></div>
+
+    <div class="feed" id="feed">
+      {% for post in posts %}
+      <div class="card" data-id="{{ post[0] }}">
+        <div class="content">{{ post[3] }}</div>
+        {% if post[4] %}
+        <div class="photos">
+          {% for img in post[4].split(',') %}
+            {% if img %}
+            <img src="{{ url_for('uploaded_file', filename=img) }}">
+            {% endif %}
+          {% endfor %}
+        </div>
+        {% endif %}
+        <div class="actions">
+          {% if post[1] == session['user'] %}
+            <button class="edit-btn" data-id="{{ post[0] }}">Edit</button>
+            <button class="delete-btn" data-id="{{ post[0] }}">Delete</button>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Modal for editing -->
+  <div class="modal" id="modal">
+    <div class="modal-card">
+      <form id="edit-form" enctype="multipart/form-data">
+        <input type="hidden" name="post_id" id="edit-id">
+        <textarea name="content" id="edit-content"></textarea>
+        <input type="file" name="images" multiple>
+        <button class="btn" type="submit">Save</button>
+        <button type="button" id="close-modal">Cancel</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Theme toggles
+    function applyTheme(name){
+      document.body.classList.remove('dark');
+      if(name==='moon'){ document.body.classList.add('dark'); }
+      else if(name==='peach'){ document.body.style.background='#fff6f2'; }
+      else if(name==='lav'){ document.body.style.background='#fbf7ff'; }
+      else{ document.body.style.background='#f7f7fb'; }
+      localStorage.setItem('scribilo-theme', name);
+    }
+    ['sun','moon','peach','lav'].forEach(t=>{
+      document.getElementById('theme-'+t).onclick=()=>applyTheme(t);
+    });
+    applyTheme(localStorage.getItem('scribilo-theme')||'sun');
+
+    // Edit & delete
+    const modal=document.getElementById('modal');
+    document.querySelectorAll('.edit-btn').forEach(btn=>{
+      btn.onclick=()=>{
+        const id=btn.dataset.id;
+        document.getElementById('edit-id').value=id;
+        document.getElementById('edit-content').value=btn.closest('.card').querySelector('.content').innerText.trim();
+        modal.classList.add('active');
+      }
+    });
+    document.getElementById('close-modal').onclick=()=>modal.classList.remove('active');
+    document.getElementById('edit-form').onsubmit=async e=>{
+      e.preventDefault();
+      const id=document.getElementById('edit-id').value;
+      const fd=new FormData(e.target);
+      const res=await fetch('/edit/'+id,{method:'POST',body:fd});
+      const j=await res.json();
+      if(j.ok) location.reload();
+    }
+    document.querySelectorAll('.delete-btn').forEach(btn=>{
+      btn.onclick=async()=>{
+        if(!confirm('Delete?')) return;
+        const res=await fetch('/delete/'+btn.dataset.id,{method:'POST'});
+        const j=await res.json();
+        if(j.ok) location.reload();
+      }
+    });
+  </script>
+</body>
+</html>
